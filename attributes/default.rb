@@ -1,16 +1,22 @@
 
 default['iptables']['apply_for_real'] = 0
 
+default['iptables']['filter'] = {
+  'INPUT' => 'DROP [0:0]',
+  'FORWARD' => 'ACCEPT [0:0]',
+  'OUTPUT' => 'ACCEPT [0:0]',
+  'LOGACCEPT' => '- [0:0]',
+  'LOGDROP' => '- [0:0]'
+}
+
 default['iptables']['static_inbound'] = {
 
-  # /sbin/iptables -A INPUT -p icmp -s 0.0.0.0/0 -j ACCEPT
   'accept icmp from anywhere' => {
     'source' => '0.0.0.0/0',
     'proto' => 'icmp',
     'action' => 'accept'
   },
 
-  # /sbin/iptables -A INPUT -p tcp -s 0.0.0.0/0 --dport 22 -j ACCEPT
   'accept ssh from anywhere' => {
     'source' => '0.0.0.0/0',  
     'proto' => 'tcp',
@@ -18,6 +24,8 @@ default['iptables']['static_inbound'] = {
     'action' => 'accept'
   }
 }
+
+default['iptables']['static_outbound'] = {}
 
 default['iptables']['dynamic_inbound'] = {
 
@@ -42,7 +50,7 @@ default['iptables']['dynamic_inbound'] = {
     'dest_ports' => [ '23', '67' ],
     'action' => 'accept'
   }
-
   
 }
 
+default['iptables']['dynamic_outbound'] = {}
