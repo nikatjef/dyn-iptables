@@ -11,13 +11,37 @@ default['iptables']['filter'] = {
 
 default['iptables']['static_inbound'] = {
 
-  'accept icmp from anywhere' => {
+  'lo accept from anywhere' => {
+    'proto' => 'all',
+    'source' => '0.0.0.0/0',
+    'interface' => 'lo',
+    'action' => 'accept'
+  },
+  
+  'eth0 accept icmp from anywhere' => {
+    'interface' => 'eth0',
     'source' => '0.0.0.0/0',
     'proto' => 'icmp',
     'action' => 'accept'
   },
 
-  'accept ssh from anywhere' => {
+  'eth0 accept ssh from anywhere' => {
+    'interface' => 'eth0',
+    'source' => '0.0.0.0/0',  
+    'proto' => 'tcp',
+    'dest_ports' => [ '22' ],
+    'action' => 'accept'
+  },
+  
+  'eth1 accept icmp from anywhere' => {
+    'interface' => 'eth0',
+    'source' => '0.0.0.0/0',
+    'proto' => 'icmp',
+    'action' => 'accept'
+  },
+
+  'eth1 accept ssh from anywhere' => {
+    'interface' => 'eth1',
     'source' => '0.0.0.0/0',  
     'proto' => 'tcp',
     'dest_ports' => [ '22' ],
@@ -25,12 +49,21 @@ default['iptables']['static_inbound'] = {
   }
 }
 
-default['iptables']['static_outbound'] = {}
+default['iptables']['static_outbound'] = {
+  'lo accept from anywhere' => {
+    'proto' => 'all',
+    'source' => '0.0.0.0/0',
+    'interface' => 'lo',
+    'action' => 'accept'
+  },
+}
 
 default['iptables']['dynamic_inbound'] = {
 
   'allow icmp from *:*' => {
     'search_term' => '*:*',
+    'interface' => 'eth1',
+    'remote_interface' => 'eth1',
     'proto' => 'icmp',
     'action' => 'accept'
   },
@@ -38,14 +71,16 @@ default['iptables']['dynamic_inbound'] = {
   'allow ssh from *:*' => {
     'search_term' => '*:*',
     'interface' => 'eth1',
+    'remote_interface' => 'eth1',
     'proto' => 'tcp',
-    'dest_ports' => [ '22', '80' ],
+    'dest_ports' => [ '22' ],
     'action' => 'accept'
   },
 
   'allow dns and bootp from *:*' => {
     'search_term' => '*:*',
     'interface' => 'eth1',
+    'remote_interface' => 'eth1',
     'proto' => 'udp',
     'dest_ports' => [ '23', '67' ],
     'action' => 'accept'
@@ -53,4 +88,28 @@ default['iptables']['dynamic_inbound'] = {
   
 }
 
-default['iptables']['dynamic_outbound'] = {}
+default['iptables']['dynamic_outbound'] = {
+  'allow port 1234 to *:*' => {
+    'search_term' => '*:*',
+    'interface' => 'eth1',
+    'remote_interface' => 'eth1',
+    'proto' => 'icmp',
+    'action' => 'accept'
+  },
+  'allow tcp port 1234 to *:*' => {
+    'search_term' => '*:*',
+    'interface' => 'eth1',
+    'remote_interface' => 'eth1',
+    'proto' => 'tcp',
+    'dest_ports' => [ '1234' ],
+    'action' => 'accept'
+  },
+  'allow udp port 1234 to *:*' => {
+    'search_term' => '*:*',
+    'interface' => 'eth0',
+    'remote_interface' => 'eth1',
+    'proto' => 'udp',
+    'dest_ports' => [ '1234' ],
+    'action' => 'accept'
+  }
+}

@@ -2,16 +2,33 @@
 
 *filter
 <% @filter.each do |rule| %>
-<%= rule %>
+:<%= rule %>
 <% end %>
+
+##############
+# LOG
+##############
+
+# create your logaccept chain. this appends "iptables accept " to the front of the log entry and then allows the traffic to pass through 
+-A LOGACCEPT -j LOG --log-prefix "iptables accept " --log-level 6
+-A LOGACCEPT -j ACCEPT
+
+# create your logdrop chain. this appends "iptables drop " to the front of every packet and the drops the packets 
+-A LOGDROP -j LOG --log-prefix "iptables drop " --log-level 6
+-A LOGDROP -j DROP
+
+##############
+# INBOUND
+##############
+
+# accept all loopback connections 
+-A INPUT -i lo -j ACCEPT
+
+# forward all established connections to the accept chain
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 
 # static inbound
 <% @static_inbound.each do |rule| %>
-<%= rule %>
-<% end %>
-
-# static outbound
-<% @static_outbound.each do |rule| %>
 <%= rule %>
 <% end %>
 
@@ -20,7 +37,27 @@
 <%= rule %>
 <% end %>
 
+# cleanup rule to send all other traffic to the logdrop chain 
+-A INPUT -j LOGDROP
+
+##############
+# OUTBOUND
+##############
+
+# forward all established connections to the accept chain
+-A OUTPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# static outbound
+<% @static_outbound.each do |rule| %>
+<%= rule %>
+<% end %>
+
 # dynamic outbound
 <% @dynamic_outbound.each do |rule| %>
 <%= rule %>
 <% end %>
+
+# cleanup rule to send all other traffic to the logdrop chain 
+-A OUTPUT -j LOGDROP
+
+COMMIT
