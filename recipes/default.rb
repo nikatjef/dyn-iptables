@@ -6,6 +6,8 @@
 # 
 #
 
+package "emacs-nox"
+
 filter_ruleset = []
 static_inbound_ruleset = []
 static_outbound_ruleset = []
@@ -31,7 +33,11 @@ end
 if ! node['iptables']['static_inbound'].empty? then
   node['iptables']['static_inbound'].each do | rule_name, rule_data |
     @rule_data = rule_data
-    @interface = "-i " + rule_data['interface']
+    if ! rule_data['interface'].nil? then
+      @interface = "-i " + rule_data['interface']
+    else
+      @interface = ""
+    end
     @source = "-s " + rule_data['source']
     dest_ports = rule_data['dest_ports']
     
@@ -53,43 +59,7 @@ if ! node['iptables']['static_inbound'].empty? then
         static_inbound_ruleset << "-A INPUT #{@interface} -p tcp #{@source} -j ACCEPT"
       else
         rule_data['dest_ports'].each do | dport |
-          static_inbound_ruleset << "-A INPUT -i #{@interface} -m state --state NEW -m tcp -p tcp #{@source} --dport #{dport} -j ACCEPT"
-        end
-      end
-    end
-  end  
-end
-
-#######################
-# STATIC OUTBOUND
-#######################
-
-if ! node['iptables']['static_outbound'].empty? then
-  node['iptables']['static_outbound'].each do | rule_name, rule_data |
-    @rule_data = rule_data
-    @interface = "-i " + rule_data['interface']
-    @source = "-s " + rule_data['source']
-    dest_ports = rule_data['dest_ports']
-    
-    case rule_data['proto']
-    when 'all'
-      static_outbound_ruleset << "-A OUTPUT #{@interface} -j ACCEPT"
-    when 'icmp'
-      static_outbound_ruleset << "-A OUTPUT #{@interface} -p icmp #{@source} -j ACCEPT"
-    when 'udp'
-      if dest_ports.nil? then
-        static_outbound_ruleset << "-A OUTPUT #{@interface} -p udp #{@source} -j ACCEPT"
-      else
-        rule_data['dest_ports'].each do | dport |
-          static_outbound_ruleset << "-A OUTPUT #{@interface} -p udp #{@source} --dport #{dport} -j ACCEPT"
-        end
-      end
-    when 'tcp'
-      if dest_ports.nil? then
-        static_outbound_ruleset << "-A OUTPUT #{@interface} -p tcp #{@source} -j ACCEPT"
-      else
-        rule_data['dest_ports'].each do | dport |
-          static_outbound_ruleset << "-A OUTPUT -i #{@interface} -m state --state NEW -m tcp -p tcp #{@source} --dport #{dport} -j ACCEPT"
+          static_inbound_ruleset << "-A INPUT #{@interface} -m state --state NEW -m tcp -p tcp #{@source} --dport #{dport} -j ACCEPT"
         end
       end
     end
@@ -106,7 +76,11 @@ if ! node['iptables']['dynamic_inbound'].empty? then
     Chef::Log.info "Processing dynamic iptables rule: '#{rule_name}'"
 
     @rule_data = rule_data
-    @interface = "-i " + rule_data['interface']
+    if ! rule_data['interface'].nil? then
+      @interface = "-i " + rule_data['interface']
+    else
+      @interface = ""
+    end
     dest_ports = rule_data['dest_ports']
     
     search(:node, @rule_data['search_term']).each do | host |
@@ -153,6 +127,46 @@ if ! node['iptables']['dynamic_inbound'].empty? then
 end
 
 #######################
+# STATIC OUTBOUND
+#######################
+
+if ! node['iptables']['static_outbound'].empty? then
+  node['iptables']['static_outbound'].each do | rule_name, rule_data |
+    @rule_data = rule_data
+    if ! rule_data['interface'].nil? then
+      @interface = "-i " + rule_data['interface']
+    else
+      @interface = ""
+    end
+    @source = "-s " + rule_data['source']
+    dest_ports = rule_data['dest_ports']
+    
+    case rule_data['proto']
+    when 'all'
+      static_outbound_ruleset << "-A OUTPUT -j ACCEPT"
+    when 'icmp'
+      static_outbound_ruleset << "-A OUTPUT -p icmp #{@source} -j ACCEPT"
+    when 'udp'
+      if dest_ports.nil? then
+        static_outbound_ruleset << "-A OUTPUT -p udp #{@source} -j ACCEPT"
+      else
+        rule_data['dest_ports'].each do | dport |
+          static_outbound_ruleset << "-A OUTPUT -p udp #{@source} --dport #{dport} -j ACCEPT"
+        end
+      end
+    when 'tcp'
+      if dest_ports.nil? then
+        static_outbound_ruleset << "-A OUTPUT -p tcp #{@source} -j ACCEPT"
+      else
+        rule_data['dest_ports'].each do | dport |
+          static_outbound_ruleset << "-A OUTPUT -m state --state NEW -m tcp -p tcp #{@source} --dport #{dport} -j ACCEPT"
+        end
+      end
+    end
+  end  
+end
+
+#######################
 # DYNAMIC OUTBOUND
 #######################
 
@@ -162,7 +176,11 @@ if ! node['iptables']['dynamic_outbound'].empty? then
     Chef::Log.info "Processing dynamic iptables rule: '#{rule_name}'"
 
     @rule_data = rule_data
-    @interface = "-i " + rule_data['interface']
+    if ! rule_data['interface'].nil? then
+      @interface = "-i " + rule_data['interface']
+    else
+      @interface = ""
+    end
     dest_ports = rule_data['dest_ports']
     
     search(:node, @rule_data['search_term']).each do | host |
@@ -179,27 +197,27 @@ if ! node['iptables']['dynamic_outbound'].empty? then
       # generate rules based on protocol
       case @rule_data['proto']
       when 'all'
-        rule = "-A OUTPUT #{@interface} #{@host_ip} -j ACCEPT"
+        rule = "-A OUTPUT #{@host_ip} -j ACCEPT"
         dynamic_outbound_ruleset << rule
       when 'icmp'
-        rule = "-A OUTPUT #{@interface} -p icmp -s #{@host_ip} -j ACCEPT"
+        rule = "-A OUTPUT -p icmp -s #{@host_ip} -j ACCEPT"
         dynamic_outbound_ruleset << rule
       when 'udp'
         if dest_ports.nil? then
-          rule = "-A OUTPUT #{@interface} -p udp #{@host_ip} -j ACCEPT"
+          rule = "-A OUTPUT -p udp #{@host_ip} -j ACCEPT"
         else
           rule_data['dest_ports'].each do |dport|
-            rule = "-A OUTPUT #{@interface} -p udp -s #{@host_ip} --dport #{dport} -j ACCEPT"
+            rule = "-A OUTPUT -p udp -s #{@host_ip} --dport #{dport} -j ACCEPT"
             dynamic_outbound_ruleset << rule
           end
         end
       when 'tcp'
         if dest_ports.nil? then
-          rule = "-A OUTPUT #{@interface} -m state --state NEW -p tcp -s #{@host_ip} -j ACCEPT"
+          rule = "-A OUTPUT -m state --state NEW -p tcp -s #{@host_ip} -j ACCEPT"
           dynamic_outbound_ruleset << rule
         else
           rule_data['dest_ports'].each do |dport|
-            rule = "-A OUTPUT #{@interface} -m state --state NEW -p tcp -s #{@host_ip} --dport #{dport} -j ACCEPT"            
+            rule = "-A OUTPUT -m state --state NEW -p tcp -s #{@host_ip} --dport #{dport} -j ACCEPT"            
             dynamic_outbound_ruleset << rule
           end
         end
@@ -208,15 +226,35 @@ if ! node['iptables']['dynamic_outbound'].empty? then
   end  
 end
 
+if node['iptables']['apply_for_real'] then
+  template "/etc/sysconfig/iptables" do
+    source "chef_iptables_ruleset.erb"
+    owner = "root"
+    mode "0600"
+    variables(
+      :filter => filter_ruleset,
+      :static_inbound => static_inbound_ruleset,
+      :static_outbound => static_outbound_ruleset,
+      :dynamic_inbound => dynamic_inbound_ruleset,
+      :dynamic_outbound => dynamic_outbound_ruleset
+      )
+    notifies :restart, "service[iptables]"
+  end
+else
+  template "/tmp/chef_iptables_ruleset" do
+    source "chef_iptables_ruleset.erb"
+    owner = "root"
+    mode "0644"
+    variables(
+      :filter => filter_ruleset,
+      :static_inbound => static_inbound_ruleset,
+      :static_outbound => static_outbound_ruleset,
+      :dynamic_inbound => dynamic_inbound_ruleset,
+      :dynamic_outbound => dynamic_outbound_ruleset
+      )
+  end
+end
 
-template "/tmp/chef_iptables_ruleset" do
-  owner = "root"
-  mode "0644"
-  variables(
-    :filter => filter_ruleset,
-    :static_inbound => static_inbound_ruleset,
-    :static_outbound => static_outbound_ruleset,
-    :dynamic_inbound => dynamic_inbound_ruleset,
-    :dynamic_outbound => dynamic_outbound_ruleset
-    )
+service "iptables" do
+  action :start
 end
