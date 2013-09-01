@@ -1,5 +1,5 @@
 
-default['iptables']['apply_for_real'] = 1
+default['iptables']['apply_for_real'] = 0
 
 default['iptables']['filter'] = {
   'INPUT' => 'DROP [0:0]',

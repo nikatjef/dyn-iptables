@@ -8,9 +8,12 @@
 
 package "emacs-nox"
 
-include_recipe "_collect_filter"
-include_recipe "_collect_inbound_rules"
-include_recipe "_collect_outbound_rules"
+# functions defined in libraries/default.rb
+filter_ruleset = collect_filter_ruleset
+static_inbound_ruleset = collect_static_inbound_ruleset
+dynamic_inbound_ruleset = collect_dynamic_inbound_ruleset
+static_outbound_ruleset = collect_static_outbound_ruleset
+dynamic_outbound_ruleset = collect_dynamic_outbound_ruleset
 
 if node['iptables']['apply_for_real'] then
   template "/etc/sysconfig/iptables" do
