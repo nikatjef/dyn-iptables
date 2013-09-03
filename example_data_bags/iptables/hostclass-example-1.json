@@ -1,0 +1,65 @@
+{
+  "id": "hostclass-example-1",
+  "filter": {
+    "INPUT": "DROP [0:0]",
+    "FORWARD": "ACCEPT [0:0]",
+    "OUTPUT": "ACCEPT [0:0]",
+    "LOGACCEPT": "- [0:0]",
+    "LOGDROP": "- [0:0]"
+  },
+  "static_inbound": {
+    "lo accept from anywhere": {
+      "proto": "all",
+      "source": "0.0.0.0/0",
+      "interface": "lo",
+      "action": "accept"
+    },
+    "eth0 accept icmp from anywhere": {
+      "interface": "eth0",
+      "source": "0.0.0.0/0",
+      "proto": "icmp",
+      "action": "accept"
+    },
+    "eth0 accept ssh from anywhere": {
+      "interface": "eth0",
+      "source": "0.0.0.0/0",  
+      "proto": "tcp",
+      "dest_ports": [ "22" ],
+      "action": "accept"
+    },
+    "eth1 accept connections to port 1234 from 4.3.2.1": {
+      "interface": "eth1",
+      "source": "4.3.2.1/32",  
+      "proto": "tcp",
+      "dest_ports": [ "1234" ],
+      "action": "accept"
+    }
+  },
+  "static_outbound": {
+    "lo accept from anywhere": {
+      "proto": "all",
+      "source": "0.0.0.0/0",
+      "interface": "lo",
+      "action": "accept"
+    }
+  },
+  "dynamic_inbound": {
+    "allow udp to port 2345 from tags:hostclass-example-2": {
+      "search_term": "tags:hostclass-example-2",
+      "interface": "eth0",
+      "remote_interface": "eth0",
+      "proto": "udp",
+      "dest_ports": [ "2345" ],
+      "action": "accept"
+    }
+  },
+  "dynamic_outbound": {
+    "allow outgoing to port 2345 at tags:hostclass-example-2": {
+      "search_term": "tags:hostclass-example-2",
+      "interface": "eth1",
+      "remote_interface": "eth1",
+      "proto": "tcp",
+      "action": "accept"
+    }
+  }  
+}
