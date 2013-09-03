@@ -14,8 +14,8 @@ default['iptables']['dynamic_inbound']
 default['iptables']['dynamic_outbound']
 ```
 
-# static_inbound example
 ```ruby
+# static_inbound example
 'lo accept from anywhere' => {
   'proto' => 'all',
   'source' => '0.0.0.0/0',
@@ -24,7 +24,6 @@ default['iptables']['dynamic_outbound']
 }
 
 # dynamic_inbound examples
-
 'allow icmp from *:*' => {
   'search_term' => '*:*',
   'interface' => 'eth0',
