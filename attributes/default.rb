@@ -89,27 +89,11 @@ default['iptables']['dynamic_inbound'] = {
 }
 
 default['iptables']['dynamic_outbound'] = {
-  'allow port 1234 to *:*' => {
-    'search_term' => '*:*',
-    'interface' => 'eth1',
-    'remote_interface' => 'eth1',
-    'proto' => 'icmp',
-    'action' => 'accept'
-  },
-  'allow tcp port 1234 to *:*' => {
+  'allow outgoing to port 1234 at *:*' => {
     'search_term' => '*:*',
     'interface' => 'eth1',
     'remote_interface' => 'eth1',
     'proto' => 'tcp',
-    'dest_ports' => [ '1234' ],
-    'action' => 'accept'
-  },
-  'allow udp port 1234 to *:*' => {
-    'search_term' => '*:*',
-    'interface' => 'eth0',
-    'remote_interface' => 'eth1',
-    'proto' => 'udp',
-    'dest_ports' => [ '1234' ],
     'action' => 'accept'
   }
 }

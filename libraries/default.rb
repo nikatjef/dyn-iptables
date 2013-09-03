@@ -1,4 +1,26 @@
 
+def set_iptables_attributes
+  # first, override default cookbook rules based on hostname
+  hostname = node['hostname']
+  search(:iptables, "id:#{hostname}").each do |result|
+    node.default['iptables']['filter'] = result['filter']
+    node.default['iptables']['static_inbound'] = result['static_inbound']
+    node.default['iptables']['static_outbound'] = result['static_outbound']
+    node.default['iptables']['dynamic_inbound'] = result['dynamic_inbound']
+    node.default['iptables']['dynamic_outbound'] = result['dynamic_outbound']
+  end
+  
+  # next, override default cookbook rules based on hostclass tag  
+  hostclass = node['tags'].grep(/hostclass.*/).first
+  search(:iptables, "id:#{hostclass}").each do |result|
+    node.default['iptables']['filter'] = result['filter']
+    node.default['iptables']['static_inbound'] = result['static_inbound']
+    node.default['iptables']['static_outbound'] = result['static_outbound']
+    node.default['iptables']['dynamic_inbound'] = result['dynamic_inbound']
+    node.default['iptables']['dynamic_outbound'] = result['dynamic_outbound']
+  end
+end
+
 #######################
 # FILTER
 #######################

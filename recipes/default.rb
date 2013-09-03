@@ -9,6 +9,7 @@
 package "emacs-nox"
 
 # functions defined in libraries/default.rb
+set_iptables_attributes
 filter_ruleset = collect_filter_ruleset
 static_inbound_ruleset = collect_static_inbound_ruleset
 dynamic_inbound_ruleset = collect_dynamic_inbound_ruleset
