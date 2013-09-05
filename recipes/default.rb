@@ -7,12 +7,37 @@
 #
 
 # functions defined in libraries/default.rb
+# @ruleset instance variable set for use in recipe
+
 set_iptables_attributes
-filter_ruleset = collect_filter_ruleset
-static_inbound_ruleset = collect_static_inbound_ruleset
-dynamic_inbound_ruleset = collect_dynamic_inbound_ruleset
-static_outbound_ruleset = collect_static_outbound_ruleset
-dynamic_outbound_ruleset = collect_dynamic_outbound_ruleset
+
+# do the work
+rule_types = []
+node['iptables'].each do |rule_source, types|
+   types.each do |type,ruledefs|
+     rule_types << type
+   end
+end
+
+#binding.pry
+ruleset = IptablesRules.new rule_types.uniq
+
+node['iptables'].each do | rule_source, types |
+  types.each do |type,ruledefs|
+    ruleset.send("#{type}", ruledefs)
+  end
+end
+
+Chef::Log.info( "static_inbound_ruleset:" )
+Chef::Log.info( ruleset.static_inbound_ruleset.uniq )
+Chef::Log.info( "dynamic_inbound_ruleset:" )
+Chef::Log.info( ruleset.dynamic_inbound_ruleset.uniq )
+Chef::Log.info( "static_outbound_ruleset:" )
+Chef::Log.info( ruleset.static_outbound_ruleset.uniq )
+Chef::Log.info( "dynamic_outbound_ruleset:" )
+Chef::Log.info( ruleset.dynamic_outbound_ruleset.uniq )
+
+binding.pry
 
 if node['iptables']['apply_for_real'] then
   template "/etc/sysconfig/iptables" do
@@ -20,11 +45,10 @@ if node['iptables']['apply_for_real'] then
     owner = "root"
     mode "0600"
     variables(
-      :filter => filter_ruleset,
-      :static_inbound => static_inbound_ruleset,
-      :static_outbound => static_outbound_ruleset,
-      :dynamic_inbound => dynamic_inbound_ruleset,
-      :dynamic_outbound => dynamic_outbound_ruleset
+      :static_inbound => ruleset.static_inbound_ruleset.uniq,
+      :dynamic_inbound => ruleset.dynamic_inbound_ruleset,
+      :static_outbound => ruleset.static_outbound_ruleset,
+      :dynamic_outbound => ruleset.dynamic_outbound_ruleset
       )
     notifies :restart, "service[iptables]"
   end
@@ -34,11 +58,10 @@ else
     owner = "root"
     mode "0644"
     variables(
-      :filter => filter_ruleset,
-      :static_inbound => static_inbound_ruleset,
-      :static_outbound => static_outbound_ruleset,
-      :dynamic_inbound => dynamic_inbound_ruleset,
-      :dynamic_outbound => dynamic_outbound_ruleset
+      :static_inbound => ruleset.static_inbound_ruleset.uniq,
+      :dynamic_inbound => ruleset.dynamic_inbound_ruleset.uniq,
+      :static_outbound => ruleset.static_outbound_ruleset.uniq,
+      :dynamic_outbound => ruleset.dynamic_outbound_ruleset.uniq
       )
   end
 end

@@ -1,15 +1,5 @@
 
-default['iptables']['apply_for_real'] = 0
-
-default['iptables']['filter'] = {
-  'INPUT' => 'DROP [0:0]',
-  'FORWARD' => 'ACCEPT [0:0]',
-  'OUTPUT' => 'ACCEPT [0:0]',
-  'LOGACCEPT' => '- [0:0]',
-  'LOGDROP' => '- [0:0]'
-}
-
-default['iptables']['static_inbound'] = {
+default['iptables']['cookbook']['static_inbound'] = {
 
   'lo accept from anywhere' => {
     'proto' => 'all',
@@ -49,7 +39,7 @@ default['iptables']['static_inbound'] = {
   }
 }
 
-default['iptables']['static_outbound'] = {
+default['iptables']['cookbook']['static_outbound'] = {
   'lo accept from anywhere' => {
     'proto' => 'all',
     'source' => '0.0.0.0/0',
@@ -58,7 +48,7 @@ default['iptables']['static_outbound'] = {
   },
 }
 
-default['iptables']['dynamic_inbound'] = {
+default['iptables']['cookbook']['dynamic_inbound'] = {
 
   'allow icmp from *:*' => {
     'search_term' => '*:*',
@@ -88,7 +78,7 @@ default['iptables']['dynamic_inbound'] = {
   
 }
 
-default['iptables']['dynamic_outbound'] = {
+default['iptables']['cookbook']['dynamic_outbound'] = {
   'allow outgoing to port 1234 at *:*' => {
     'search_term' => '*:*',
     'interface' => 'eth1',
