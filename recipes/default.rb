@@ -22,6 +22,7 @@ ruleset = IptablesRules.new rule_types.uniq
 
 node['iptables'].each do | rule_source, types |
   types.each do |type,ruledefs|
+    Chef::Log.info("DEBUG: calling #{type}")
     ruleset.send("#{type}", ruledefs)
   end
 end

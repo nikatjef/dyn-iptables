@@ -1,4 +1,3 @@
-#require 'pry'
 
 class IptablesRules
   attr_accessor :filter_ruleset
@@ -36,22 +35,54 @@ class IptablesRules
           (rule_data['proto'].nil? || rule_data['proto'] == 'all') ? @proto = "" : @proto = "-p " + rule_data['proto']
           rule_data['source'].nil? ? @source = "" : @source = "-s " + rule_data['source']
           rule_data['proto'] == 'tcp' ? @state_rule = "-m state --state NEW" : @state_rule = ""
-
-#          __method__.to_s =~ /dynamic/
           
-          if rule_data['dest_ports'].nil? then
-            eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
-          else
-            rule_data['dest_ports'].each do |port|
-              eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
-            end
+          # static
+          if __method__.to_s =~ /static/ then          
+            if rule_data['dest_ports'].nil? then
+              eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
+            else
+              rule_data['dest_ports'].each do |port|
+                eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
+              end
+            end            
           end
           
-        end
-      end
-    end    
-  end
-  
+          # dymanic
+          if __method__.to_s =~ /dynamic/ then
+            if ! rule_data['search_term'].nil?
+              results = []
+              Chef::Search::Query.new.search(:node, rule_data['search_term'])[0].each { |rows| results << rows }
+              results.each do |host|
+                # add more? generate?
+                case rule_data['remote_interface']
+                when 'eth0'
+                  @host_ip = host['ipaddress']
+                when 'eth1'
+                  unless host['network'].nil?
+                    @host_ip = host['network']['interfaces']['eth1']['addresses'].select { |address, data| data['family'] == 'inet' }.keys[0]
+                  end
+                when 'eth2'
+                  unless host['network'].nil?
+                    @host_ip = host['network']['interfaces']['eth2']['addresses'].select { |address, data| data['family'] == 'inet' }.keys[0]
+                  end
+                end
+
+                @source = "-s " + @host_ip
+                
+                if rule_data['dest_ports'].nil? then
+                  eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
+                else
+                  rule_data['dest_ports'].each do |port|
+                    eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
+                  end
+                end                          
+              end # search.each
+            end # if ! rule_data['search_term'].nil?
+          end # __method__.to_s =~ /static/ then
+        end # rule_defs.each
+      end # if ! rule_defs.empty?
+    end # define_method
+  end # self.define_component
 end # class IptablesRules
 
 def set_iptables_attributes
