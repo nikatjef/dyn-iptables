@@ -1,4 +1,6 @@
 
+default['iptables_apply_for_real'] = 1
+
 default['iptables']['cookbook']['static_inbound'] = {
 
   'lo accept from anywhere' => {

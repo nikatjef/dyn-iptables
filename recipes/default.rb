@@ -8,7 +8,6 @@
 
 # functions defined in libraries/default.rb
 # @ruleset instance variable set for use in recipe
-
 set_iptables_attributes
 
 # do the work
@@ -19,7 +18,6 @@ node['iptables'].each do |rule_source, types|
    end
 end
 
-#binding.pry
 ruleset = IptablesRules.new rule_types.uniq
 
 node['iptables'].each do | rule_source, types |
@@ -28,18 +26,9 @@ node['iptables'].each do | rule_source, types |
   end
 end
 
-Chef::Log.info( "static_inbound_ruleset:" )
-Chef::Log.info( ruleset.static_inbound_ruleset.uniq )
-Chef::Log.info( "dynamic_inbound_ruleset:" )
-Chef::Log.info( ruleset.dynamic_inbound_ruleset.uniq )
-Chef::Log.info( "static_outbound_ruleset:" )
-Chef::Log.info( ruleset.static_outbound_ruleset.uniq )
-Chef::Log.info( "dynamic_outbound_ruleset:" )
-Chef::Log.info( ruleset.dynamic_outbound_ruleset.uniq )
+#binding.pry
 
-binding.pry
-
-if node['iptables']['apply_for_real'] then
+if node['iptables_apply_for_real'] then
   template "/etc/sysconfig/iptables" do
     source "chef_iptables_ruleset.erb"
     owner = "root"
