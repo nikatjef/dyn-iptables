@@ -1,3 +1,4 @@
+require 'pry'
 
 class IptablesRules
   attr_accessor :filter_ruleset
@@ -6,20 +7,32 @@ class IptablesRules
   attr_accessor :static_outbound_ruleset
   attr_accessor :dynamic_outbound_ruleset
   
-  def initialize(rule_types)
-
-    @rule_types = rule_types
-    
+  def initialize(node)    
     # create arrays for ruleset parts
-    @filter_ruleset = []
+    @rule_types = []
     @static_inbound_ruleset = []
     @dynamic_inbound_ruleset = []
     @static_outbound_ruleset = []
     @dynamic_outbound_ruleset = []
 
+    IptablesRules.set_attributes node
+
+    # do the work
+    node['iptables'].each do |rule_source, types|
+      types.each do |type,ruledefs|
+        @rule_types << type
+      end
+    end
+
     # register methods
     @rule_types.each do |type|
       IptablesRules.define_component(type)
+    end
+    
+    node['iptables'].each do | rule_source, types |
+      types.each do |type,ruledefs|
+        self.send("#{type}", ruledefs)
+      end
     end
     
   end # initialize
@@ -83,34 +96,37 @@ class IptablesRules
       end # if ! rule_defs.empty?
     end # define_method
   end # self.define_component
-end # class IptablesRules
 
-def set_iptables_attributes
-  # set node attributes from databags
-  hostname = node['hostname']
-  begin
-    search(:iptables_hostname, "id:#{hostname}").each do |result|
-      node.default['iptables']['hostname']['static_inbound'] = result['static_inbound']
-      node.default['iptables']['hostname']['static_outbound'] = result['static_outbound']
-      node.default['iptables']['hostname']['dynamic_inbound'] = result['dynamic_inbound']
-      node.default['iptables']['hostname']['dynamic_outbound'] = result['dynamic_outbound']      
-    end
-  rescue => exception
-    Chef::Log.info("Caught #{exception}. Databag iptables_hostname could not be searched.")
-  end
-
-  # next, override default cookbook rules based on hostclass tag  
-  hostclass = node['tags'].grep(/hostclass.*/).first
-  if ! hostclass.nil? then
-    begin    
-      search(:iptables_hostclass, "id:#{hostclass}").each do |result|
-        node.default['iptables']['hostclass']['static_inbound'] = result['static_inbound']
-        node.default['iptables']['hostclass']['static_outbound'] = result['static_outbound']
-        node.default['iptables']['hostclass']['dynamic_inbound'] = result['dynamic_inbound']
-        node.default['iptables']['hostclass']['dynamic_outbound'] = result['dynamic_outbound']
+  def self.set_attributes(node)
+    # set node attributes from databags
+    binding.pry
+    hostname = node['hostname']
+    begin
+      Chef::Search::Query.new.search(:iptables_hostname, "id:#{hostname}")[0].each do |result|
+        node.default['iptables']['hostname']['static_inbound'] = result['static_inbound']
+        node.default['iptables']['hostname']['static_outbound'] = result['static_outbound']
+        node.default['iptables']['hostname']['dynamic_inbound'] = result['dynamic_inbound']
+        node.default['iptables']['hostname']['dynamic_outbound'] = result['dynamic_outbound']      
       end
     rescue => exception
-      Chef::Log.info("Caught #{exception}. Databag iptables_hostclass could not be searched.")
+      Chef::Log.info("Caught #{exception}. Databag iptables_hostname could not be searched.")
+    end
+
+    # next, override default cookbook rules based on hostclass tag  
+    hostclass = node['tags'].grep(/hostclass.*/).first
+    if ! hostclass.nil? then
+      begin
+        #Chef::PartialSearch(:node, '*:*', keys: { ip:[ 'ipaddress' ] } )
+        Chef::Search::Query.new.search(:iptables_hostclass, "id:#{hostclass}")[0].each do |result|
+          node.default['iptables']['hostclass']['static_inbound'] = result['static_inbound']
+          node.default['iptables']['hostclass']['static_outbound'] = result['static_outbound']
+          node.default['iptables']['hostclass']['dynamic_inbound'] = result['dynamic_inbound']
+          node.default['iptables']['hostclass']['dynamic_outbound'] = result['dynamic_outbound']
+        end
+      rescue => exception
+        Chef::Log.info("Caught #{exception}. Databag iptables_hostclass could not be searched.")
+      end
     end
   end
-end
+  
+end # class IptablesRules

@@ -8,26 +8,10 @@
 
 # functions defined in libraries/default.rb
 # @ruleset instance variable set for use in recipe
-set_iptables_attributes
 
-# do the work
-rule_types = []
-node['iptables'].each do |rule_source, types|
-   types.each do |type,ruledefs|
-     rule_types << type
-   end
-end
+ruleset = IptablesRules.new node
 
-ruleset = IptablesRules.new rule_types.uniq
-
-node['iptables'].each do | rule_source, types |
-  types.each do |type,ruledefs|
-    Chef::Log.info("DEBUG: calling #{type}")
-    ruleset.send("#{type}", ruledefs)
-  end
-end
-
-#binding.pry
+binding.pry
 
 if node['iptables_apply_for_real'] then
   template "/etc/sysconfig/iptables" do
