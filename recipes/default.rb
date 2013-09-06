@@ -11,8 +11,6 @@
 
 ruleset = IptablesRules.new node
 
-binding.pry
-
 if node['iptables_apply_for_real'] then
   template "/etc/sysconfig/iptables" do
     source "chef_iptables_ruleset.erb"

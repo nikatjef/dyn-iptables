@@ -1,5 +1,3 @@
-require 'pry'
-
 class IptablesRules
   attr_accessor :filter_ruleset
   attr_accessor :static_inbound_ruleset
@@ -64,7 +62,8 @@ class IptablesRules
           if __method__.to_s =~ /dynamic/ then
             if ! rule_data['search_term'].nil?
               results = []
-              Chef::Search::Query.new.search(:node, rule_data['search_term'])[0].each { |rows| results << rows }
+              partial_search(:node, rule_data['search_term'], keys: { ip: [ 'ipaddress' ], network: ['network'], cloud: ['cloud'] })
+#              Chef::Search::Query.new.search(:node, rule_data['search_term'])[0].each { |rows| results << rows }
               results.each do |host|
                 # add more? generate?
                 case rule_data['remote_interface']
@@ -99,7 +98,6 @@ class IptablesRules
 
   def self.set_attributes(node)
     # set node attributes from databags
-    binding.pry
     hostname = node['hostname']
     begin
       Chef::Search::Query.new.search(:iptables_hostname, "id:#{hostname}")[0].each do |result|
@@ -116,7 +114,6 @@ class IptablesRules
     hostclass = node['tags'].grep(/hostclass.*/).first
     if ! hostclass.nil? then
       begin
-        #Chef::PartialSearch(:node, '*:*', keys: { ip:[ 'ipaddress' ] } )
         Chef::Search::Query.new.search(:iptables_hostclass, "id:#{hostclass}")[0].each do |result|
           node.default['iptables']['hostclass']['static_inbound'] = result['static_inbound']
           node.default['iptables']['hostclass']['static_outbound'] = result['static_outbound']
