@@ -1,5 +1,5 @@
 {
-  "id": "hostclass-example-2",
+  "id": "iptables-1",
   "filter": {
     "INPUT": "DROP [0:0]",
     "FORWARD": "ACCEPT [0:0]",
@@ -27,9 +27,9 @@
       "dest_ports": [ "22" ],
       "action": "accept"
     },
-    "eth1 accept connections to port 1234 from 4.3.2.1": {
+    "eth1 accept connections to port 1234 from 5.4.3.2": {
       "interface": "eth1",
-      "source": "4.3.2.1/32",  
+      "source": "5.4.3.2/32",  
       "proto": "tcp",
       "dest_ports": [ "1234" ],
       "action": "accept"
@@ -44,8 +44,8 @@
     }
   },
   "dynamic_inbound": {
-    "allow udp to port 2345 from tags:hostclass-example-1": {
-      "search_term": "tags:hostclass-example-1",
+    "allow udp to port 2345 from tags:hostclass-example-2": {
+      "search_term": "tags:hostclass-example-2",
       "interface": "eth0",
       "remote_interface": "eth0",
       "proto": "udp",
@@ -54,8 +54,8 @@
     }
   },
   "dynamic_outbound": {
-    "allow outgoing to port 2345 at tags:hostclass-example-1": {
-      "search_term": "tags:hostclass-example-1",
+    "allow outgoing to port 2345 at tags:hostclass-example-2": {
+      "search_term": "tags:hostclass-example-2",
       "interface": "eth1",
       "remote_interface": "eth1",
       "proto": "tcp",
