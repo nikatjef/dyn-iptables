@@ -1,12 +1,5 @@
 {
   "id": "hostclass-example-1",
-  "filter": {
-    "INPUT": "DROP [0:0]",
-    "FORWARD": "ACCEPT [0:0]",
-    "OUTPUT": "ACCEPT [0:0]",
-    "LOGACCEPT": "- [0:0]",
-    "LOGDROP": "- [0:0]"
-  },
   "static_inbound": {
     "lo accept from anywhere": {
       "proto": "all",
