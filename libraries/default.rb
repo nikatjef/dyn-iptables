@@ -1,3 +1,5 @@
+#require 'pry'
+
 class IptablesRules
   attr_accessor :filter_ruleset
   attr_accessor :static_inbound_ruleset
@@ -15,7 +17,6 @@ class IptablesRules
 
     IptablesRules.set_attributes node
 
-    # do the work
     node['iptables'].each do |rule_source, types|
       types.each do |type,ruledefs|
         @rule_types << type
@@ -26,13 +27,15 @@ class IptablesRules
     @rule_types.each do |type|
       IptablesRules.define_component(type)
     end
-    
-    node['iptables'].each do | rule_source, types |
-      types.each do |type,ruledefs|
-        self.send("#{type}", ruledefs)
+
+    # do work
+    node['iptables'].keys.each do | rule_source |
+      node['iptables']["#{rule_source}"].each do |type,ruledefs|
+        self.send(type,ruledefs)
       end
     end
-    
+
+#    binding.pry
   end # initialize
   
   def self.define_component(name)
@@ -60,11 +63,9 @@ class IptablesRules
           
           # dymanic
           if __method__.to_s =~ /dynamic/ then
+#            binding.pry
             if ! rule_data['search_term'].nil?
-              results = []
-              partial_search(:node, rule_data['search_term'], keys: { ip: [ 'ipaddress' ], network: ['network'], cloud: ['cloud'] })
-#              Chef::Search::Query.new.search(:node, rule_data['search_term'])[0].each { |rows| results << rows }
-              results.each do |host|
+              partial_search(:node, rule_data['search_term'], keys: { ip: [ 'ipaddress' ], network: ['network'], cloud: ['cloud'] }).each do |host|
                 # add more? generate?
                 case rule_data['remote_interface']
                 when 'eth0'
@@ -98,9 +99,11 @@ class IptablesRules
 
   def self.set_attributes(node)
     # set node attributes from databags
+    
     hostname = node['hostname']
     begin
       Chef::Search::Query.new.search(:iptables_hostname, "id:#{hostname}")[0].each do |result|
+        Chef::Log.info("setting iptables_hostname")
         node.default['iptables']['hostname']['static_inbound'] = result['static_inbound']
         node.default['iptables']['hostname']['static_outbound'] = result['static_outbound']
         node.default['iptables']['hostname']['dynamic_inbound'] = result['dynamic_inbound']
@@ -115,6 +118,7 @@ class IptablesRules
     if ! hostclass.nil? then
       begin
         Chef::Search::Query.new.search(:iptables_hostclass, "id:#{hostclass}")[0].each do |result|
+          Chef::Log.info("setting iptables_hostclass")
           node.default['iptables']['hostclass']['static_inbound'] = result['static_inbound']
           node.default['iptables']['hostclass']['static_outbound'] = result['static_outbound']
           node.default['iptables']['hostclass']['dynamic_inbound'] = result['dynamic_inbound']
@@ -125,5 +129,5 @@ class IptablesRules
       end
     end
   end
-  
+
 end # class IptablesRules
