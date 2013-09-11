@@ -63,32 +63,30 @@ class IptablesRules
           
           # dymanic
           if __method__.to_s =~ /dynamic/ then
-#            binding.pry
             if ! rule_data['search_term'].nil?
               partial_search(:node, rule_data['search_term'], keys: { ip: [ 'ipaddress' ], network: ['network'], cloud: ['cloud'] }).each do |host|
-                # add more? generate?
-                case rule_data['remote_interface']
-                when 'eth0'
+                @host_ip=""
+                if rule_data['remote_interface'] == 'eth0' then
                   @host_ip = host['ipaddress']
-                when 'eth1'
-                  unless host['network'].nil?
-                    @host_ip = host['network']['interfaces']['eth1']['addresses'].select { |address, data| data['family'] == 'inet' }.keys[0]
-                  end
-                when 'eth2'
-                  unless host['network'].nil?
-                    @host_ip = host['network']['interfaces']['eth2']['addresses'].select { |address, data| data['family'] == 'inet' }.keys[0]
+                else
+                  #binding.pry
+                  if ! (host['network'].nil? || host['network']['interfaces']["#{rule_data['remote_interface']}"].nil?)
+                    @host_ip = host['network']['interfaces']["#{rule_data['remote_interface']}"]['addresses'].select { |address, data| data['family'] == 'inet' }.keys[0]
                   end
                 end
 
-                @source = "-s " + @host_ip
-                
-                if rule_data['dest_ports'].nil? then
-                  eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
+                if @host_ip.empty? then
+                  Chef::Log.warn("Search results for #{rule_data['search_term']} in rule #{rule_name} contains no data for interface #{rule_data['remote_interface']}. Skipping.")
                 else
-                  rule_data['dest_ports'].each do |port|
-                    eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
+                  @source = "-s " + @host_ip
+                  if rule_data['dest_ports'].nil? then
+                    eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
+                  else
+                    rule_data['dest_ports'].each do |port|
+                      eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
+                    end
                   end
-                end                          
+                end
               end # search.each
             end # if ! rule_data['search_term'].nil?
           end # __method__.to_s =~ /static/ then
