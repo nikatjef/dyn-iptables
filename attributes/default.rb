@@ -1,9 +1,9 @@
 
 default['iptables_apply_for_real'] = 1
 default['iptables_input_default_deny'] = 1
-default['iptables_output_default_deny'] = 0
+default['iptables_output_default_deny'] = 1
 
-default['iptables_temp_destination'] = '/tmp/chef_iptables_ruleset
+default['iptables_temp_destination'] = '/tmp/chef_iptables_ruleset'
 
 default['iptables']['cookbook']['static_inbound'] = {
 

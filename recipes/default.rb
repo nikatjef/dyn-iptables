@@ -19,7 +19,7 @@ iptables_save_dest = value_for_platform(
 
 
 
-iptables_template_dest = (node['iptables_apply_for_real']) ? iptables_save_dest : node['iptables_temp_destination']
+iptables_template_dest = (node['iptables_apply_for_real'] == 1) ? iptables_save_dest : node['iptables_temp_destination']
 
 template "/etc/sysconfig/iptables" do
   source "chef_iptables_ruleset.erb"
@@ -31,7 +31,7 @@ template "/etc/sysconfig/iptables" do
     :static_outbound => ruleset.static_outbound_ruleset,
     :dynamic_outbound => ruleset.dynamic_outbound_ruleset
     )
-  if (node['iptables_apply_for_real'])
+  if (node['iptables_apply_for_real'] == 1)
     notifies :restart, "service[iptables]"
   end
 end
