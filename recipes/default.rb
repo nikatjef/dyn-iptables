@@ -11,33 +11,31 @@
 
 ruleset = IptablesRules.new node
 
-if node['iptables_apply_for_real'] then
-  template "/etc/sysconfig/iptables" do
-    source "chef_iptables_ruleset.erb"
-    owner = "root"
-    mode "0600"
-    variables(
-      :static_inbound => ruleset.static_inbound_ruleset.uniq,
-      :dynamic_inbound => ruleset.dynamic_inbound_ruleset,
-      :static_outbound => ruleset.static_outbound_ruleset,
-      :dynamic_outbound => ruleset.dynamic_outbound_ruleset
-      )
+iptables_save_dest = value_for_platform(
+  [ 'centos', 'redhat', 'suse', 'fedora', 'amazon', 'scientific', 'oracle' ] => { 'default' => '/etc/sysconfig/iptables' },
+  [ 'debian', 'ubuntu' ] => { 'default' => '/etc/iptables.save' },
+  'default' => '/etc/iptables.save'
+  )
+
+
+
+iptables_template_dest = (node['iptables_apply_for_real']) ? iptables_save_dest : '/tmp/chef_iptables_ruleset'
+
+template "/etc/sysconfig/iptables" do
+  source "chef_iptables_ruleset.erb"
+  owner = "root"
+  mode "0600"
+  variables(
+    :static_inbound => ruleset.static_inbound_ruleset.uniq,
+    :dynamic_inbound => ruleset.dynamic_inbound_ruleset,
+    :static_outbound => ruleset.static_outbound_ruleset,
+    :dynamic_outbound => ruleset.dynamic_outbound_ruleset
+    )
+  if (node['iptables_apply_for_real'])
     notifies :restart, "service[iptables]"
-  end
-else
-  template "/tmp/chef_iptables_ruleset" do
-    source "chef_iptables_ruleset.erb"
-    owner = "root"
-    mode "0644"
-    variables(
-      :static_inbound => ruleset.static_inbound_ruleset.uniq,
-      :dynamic_inbound => ruleset.dynamic_inbound_ruleset.uniq,
-      :static_outbound => ruleset.static_outbound_ruleset.uniq,
-      :dynamic_outbound => ruleset.dynamic_outbound_ruleset.uniq
-      )
   end
 end
 
 service "iptables" do
-  action :start
+  action :nothing
 end

@@ -41,7 +41,7 @@
 <% end %>
 
 # cleanup rule to send all other traffic to the logdrop chain 
--A INPUT -j LOGDROP
+-A INPUT -j <%= (node['iptables_input_default_deny']) ? "LOGDROP" : "LOGACCEPT" %>
 
 ##############
 # OUTBOUND
@@ -61,6 +61,6 @@
 <% end %>
 
 # cleanup rule to send all other traffic to the logdrop chain 
--A OUTPUT -j LOGDROP
+-A OUTPUT -j <%= (node['iptables_output_default_deny']) ? "LOGDROP" : "LOGACCEPT" %>
 
 COMMIT
