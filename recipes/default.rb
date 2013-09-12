@@ -19,7 +19,7 @@ iptables_save_dest = value_for_platform(
 
 
 
-iptables_template_dest = (node['iptables_apply_for_real']) ? iptables_save_dest : '/tmp/chef_iptables_ruleset'
+iptables_template_dest = (node['iptables_apply_for_real']) ? iptables_save_dest : node['iptables_temp_destination']
 
 template "/etc/sysconfig/iptables" do
   source "chef_iptables_ruleset.erb"
