@@ -40,7 +40,7 @@ class IptablesRules
   
   def self.define_component(name)
     define_method(name) do |ruledefs|
-      if ! ruledefs.empty? then
+      if ! ruledefs.nil? then
 
         __method__.to_s =~ /inbound/ ? @direction = "INPUT" : @direction = "OUTPUT"
         
@@ -88,6 +88,19 @@ class IptablesRules
                   end
                 end
               end # search.each
+            elsif ! rule_data['source'].nil?
+              if rule_data['source'] =~ /any/ then
+                @source = ""
+              else
+                @source = "-s " + rule_data['source']
+              end
+              if rule_data['dest_ports'].nil? then
+                eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} -j ACCEPT".squeeze(" ")
+              else
+                rule_data['dest_ports'].each do |port|
+                  eval("@#{__method__}_ruleset") << "-A #{@direction} #{@interface} #{@state_rule} #{@proto} #{@source} --dport #{port} -j ACCEPT".squeeze(" ")
+                end
+              end
             end # if ! rule_data['search_term'].nil?
           end # __method__.to_s =~ /static/ then
         end # rule_defs.each
@@ -112,7 +125,7 @@ class IptablesRules
     end
 
     # next, override default cookbook rules based on hostclass tag  
-    hostclass = node['tags'].grep(/hostclass.*/).first
+    hostclass = node['tags'].grep(/iptables-.*/).first
     if ! hostclass.nil? then
       begin
         Chef::Search::Query.new.search(:iptables_hostclass, "id:#{hostclass}")[0].each do |result|
