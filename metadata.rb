@@ -1,4 +1,4 @@
-name             'iptables'
+name             'dyn-iptables'
 maintainer       'Opscode'
 maintainer_email 'Sean OMeara <someara@opscode.com>'
 license          'Apache2'
